@@ -5,7 +5,6 @@ import android.app.Activity
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -21,7 +20,8 @@ import io.legado.app.help.AppConfig
 import io.legado.app.help.LocalConfig
 import io.legado.app.help.ReadBookConfig
 import io.legado.app.help.coroutine.Coroutine
-import io.legado.app.lib.dialogs.*
+import io.legado.app.lib.dialogs.alert
+import io.legado.app.lib.dialogs.selector
 import io.legado.app.lib.theme.ATH
 import io.legado.app.lib.theme.ThemeStore
 import io.legado.app.lib.theme.backgroundColor
@@ -165,9 +165,7 @@ abstract class ReadBookBaseActivity :
         if (!isInMultiWindow) {
             flag = flag or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
         }
-        if (ReadBookConfig.hideNavigationBar) {
-            flag = flag or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-        }
+        flag = flag or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
         if (toolBarHide) {
             if (ReadBookConfig.hideStatusBar) {
                 flag = flag or View.SYSTEM_UI_FLAG_FULLSCREEN
@@ -184,11 +182,8 @@ abstract class ReadBookBaseActivity :
             read_menu == null -> return
             read_menu.isVisible -> ATH.setNavigationBarColorAuto(this)
             bottomDialog > 0 -> ATH.setNavigationBarColorAuto(this, bottomBackground)
-            ReadBookConfig.bg is ColorDrawable -> {
-                ATH.setNavigationBarColorAuto(this, ReadBookConfig.bgMeanColor)
-            }
             else -> {
-                ATH.setNavigationBarColorAuto(this, Color.BLACK)
+                ATH.setNavigationBarColorAuto(this, Color.TRANSPARENT)
             }
         }
     }
@@ -208,7 +203,7 @@ abstract class ReadBookBaseActivity :
      * 适配刘海
      */
     private fun upLayoutInDisplayCutoutMode() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && AppConfig.readBodyToLh) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && ReadBookConfig.readBodyToLh) {
             window.attributes = window.attributes.apply {
                 layoutInDisplayCutoutMode =
                     WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES

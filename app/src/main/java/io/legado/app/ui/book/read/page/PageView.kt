@@ -112,7 +112,7 @@ class PageView(context: Context, attrs: AttributeSet) :
         brRect.set(width * 0.66f, height * 0.66f, width - 10f, height - 10f)
         prevPage.x = -w.toFloat()
         pageDelegate?.setViewSize(w, h)
-        if (oldw != 0 && oldh != 0) {
+        if (w != 0 && h != 0) {
             ReadBook.loadContent(resetPageOffset = false)
         }
     }
@@ -261,31 +261,31 @@ class PageView(context: Context, attrs: AttributeSet) :
         when {
             isTextSelected -> isTextSelected = false
             mcRect.contains(startX, startY) -> if (!isAbortAnim) {
-                click(AppConfig.clickActionMiddleCenter)
+                click(AppConfig.clickActionMC)
             }
             bcRect.contains(startX, startY) -> {
-                click(AppConfig.clickActionBottomCenter)
+                click(AppConfig.clickActionBC)
             }
             blRect.contains(startX, startY) -> {
-                click(AppConfig.clickActionBottomLeft)
+                click(AppConfig.clickActionBL)
             }
             brRect.contains(startX, startY) -> {
-                click(AppConfig.clickActionBottomRight)
+                click(AppConfig.clickActionBR)
             }
             mlRect.contains(startX, startY) -> {
-                click(AppConfig.clickActionMiddleLeft)
+                click(AppConfig.clickActionML)
             }
             mrRect.contains(startX, startY) -> {
-                click(AppConfig.clickActionMiddleRight)
+                click(AppConfig.clickActionMR)
             }
             tlRect.contains(startX, startY) -> {
-                click(AppConfig.clickActionTopLeft)
+                click(AppConfig.clickActionTL)
             }
             tcRect.contains(startX, startY) -> {
-                click(AppConfig.clickActionTopCenter)
+                click(AppConfig.clickActionTC)
             }
             trRect.contains(startX, startY) -> {
-                click(AppConfig.clickActionTopRight)
+                click(AppConfig.clickActionTR)
             }
         }
     }
