@@ -8,7 +8,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    if: ${{ github.event.repository.owner.id == github.event.sender.id && github.actor != 'gedoor' }}
+    if: ${{ github.event.repository.owner.id == github.event.sender.id && github.actor != 'supr3me' }}
     steps:
     - name: Checkout
       uses: actions/checkout@v2
@@ -24,7 +24,7 @@ jobs:
         git config --global user.name "github-actions"
     - name: Update fork
       run: |
-        git remote add upstream https://github.com/gedoor/legado.git
+        git remote add upstream https://github.com/supr3me/legado.git
         git remote -v
         git fetch upstream
         git checkout master
