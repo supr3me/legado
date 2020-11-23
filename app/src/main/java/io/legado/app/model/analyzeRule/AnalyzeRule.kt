@@ -39,6 +39,7 @@ class AnalyzeRule(var book: BaseBook? = null) : JsExtensions {
     private var objectChangedJS = false
     private var objectChangedJP = false
 
+    @JvmOverloads
     fun setContent(content: Any?, baseUrl: String? = null): AnalyzeRule {
         if (content == null) throw AssertionError("Content cannot be null")
         this.content = content
@@ -295,34 +296,6 @@ class AnalyzeRule(var book: BaseBook? = null) : JsExtensions {
             return it as List<Any>
         }
         return ArrayList()
-    }
-
-    fun getByteArray(ruleStr: String): ByteArray? {
-        if (ruleStr.isEmpty()) return null
-        val ruleList = splitSourceRule(ruleStr)
-        var result: Any? = null
-        content?.let { o ->
-            if (ruleList.isNotEmpty()) result = o
-            for (sourceRule in ruleList) {
-                putRule(sourceRule.putMap)
-                result?.let {
-                    result = when (sourceRule.mode) {
-                        Mode.Regex -> AnalyzeByRegex.getElements(
-                            result.toString(),
-                            sourceRule.rule.splitNotBlank("&&")
-                        )
-                        Mode.Js -> evalJS(sourceRule.rule, result)
-                        Mode.Json -> getAnalyzeByJSonPath(it).getList(sourceRule.rule)
-                        Mode.XPath -> getAnalyzeByXPath(it).getElements(sourceRule.rule)
-                        else -> getAnalyzeByJSoup(it).getElements(sourceRule.rule)
-                    }
-                    if (sourceRule.replaceRegex.isNotEmpty()) {
-                        result = replaceRegex(result.toString(), sourceRule)
-                    }
-                }
-            }
-        }
-        return result as? ByteArray
     }
 
     /**
@@ -648,7 +621,7 @@ class AnalyzeRule(var book: BaseBook? = null) : JsExtensions {
     /**
      * 执行JS
      */
-    private fun evalJS(jsStr: String, result: Any?): Any? {
+    fun evalJS(jsStr: String, result: Any?, content: String? = null): Any? {
         val bindings = SimpleBindings()
         bindings["java"] = this
         bindings["cookie"] = CookieStore
@@ -658,6 +631,7 @@ class AnalyzeRule(var book: BaseBook? = null) : JsExtensions {
         bindings["baseUrl"] = baseUrl
         bindings["chapter"] = chapter
         bindings["title"] = chapter?.title
+        bindings["content"] = content
         return SCRIPT_ENGINE.eval(jsStr, bindings)
     }
 

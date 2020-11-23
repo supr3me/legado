@@ -34,14 +34,7 @@ object BookContent {
         val content = StringBuilder()
         val nextUrlList = arrayListOf(baseUrl)
         val contentRule = bookSource.getContentRule()
-        contentRule.font?.let {
-            //todo 获取字体
-            val analyzeRule = AnalyzeRule(book)
-            analyzeRule.setContent(body).setBaseUrl(baseUrl)
-            analyzeRule.getByteArray(it)?.let { font ->
-                BookHelp.saveFont(book, bookChapter, font)
-            }
-        }
+        val analyzeRule = AnalyzeRule(book).setContent(body, baseUrl)
         var contentData = analyzeContent(
             book, baseUrl, body, contentRule, bookChapter, bookSource
         )
@@ -99,11 +92,13 @@ object BookContent {
         }
         content.deleteCharAt(content.length - 1)
         var contentStr = content.toString().htmlFormat()
-        val replaceRegex = bookSource.ruleContent?.replaceRegex
+        val fontJs = contentRule.fontJs
+        if (!fontJs.isNullOrBlank()) {
+            contentStr = analyzeRule.evalJS(fontJs, body, contentStr)?.toString() ?: ""
+        }
+        val replaceRegex = contentRule.replaceRegex
         if (!replaceRegex.isNullOrEmpty()) {
-            val analyzeRule = AnalyzeRule(book)
-            analyzeRule.setContent(contentStr).setBaseUrl(baseUrl)
-            analyzeRule.chapter = bookChapter
+            analyzeRule.setContent(contentStr)
             contentStr = analyzeRule.getString(replaceRegex)
         }
         Debug.log(bookSource.bookSourceUrl, "┌获取章节名称")
