@@ -57,13 +57,17 @@ object BookHelp {
 
     suspend fun saveContent(book: Book, bookChapter: BookChapter, content: String) {
         if (content.isEmpty()) return
+        var sContent = content
+        if (book.bookUrl.contains("fastnovel.net")) {
+            sContent = bookChapter.title+"\n\n"+content
+        }
         //保存文本
         FileUtils.createFileIfNotExist(
             downloadDir,
             cacheFolderName,
             book.getFolderName(),
             bookChapter.getFileName(),
-        ).writeText(content)
+        ).writeText(sContent)
         //保存图片
         content.split("\n").forEach {
             val matcher = AppPattern.imgPattern.matcher(it)
