@@ -14,6 +14,7 @@ import io.legado.app.utils.NetworkUtils
 import io.legado.app.utils.htmlFormat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.withContext
+import kotlin.jvm.Throws
 
 object BookContent {
 

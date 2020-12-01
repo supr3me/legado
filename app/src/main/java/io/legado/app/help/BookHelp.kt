@@ -153,7 +153,7 @@ object BookHelp {
         }
         FileUtils.createFolderIfNotExist(
             downloadDir,
-            subDirs = arrayOf(cacheFolderName, book.getFolderName())
+            subDirs = *arrayOf(cacheFolderName, book.getFolderName())
         ).list()?.let {
             fileNameList.addAll(it)
         }
