@@ -10,8 +10,8 @@ import io.legado.app.utils.GSON
 import io.legado.app.utils.MD5Utils
 import io.legado.app.utils.NetworkUtils
 import io.legado.app.utils.fromJsonObject
-import kotlinx.android.parcel.IgnoredOnParcel
-import kotlinx.android.parcel.Parcelize
+import kotlinx.parcelize.IgnoredOnParcel
+import kotlinx.parcelize.Parcelize
 
 
 @Parcelize
@@ -63,7 +63,7 @@ data class BookChapter(
 
     fun getAbsoluteURL(): String {
         val urlArray = url.split(AnalyzeUrl.splitUrlRegex)
-        var absoluteUrl = NetworkUtils.getAbsoluteURL(baseUrl, urlArray[0])!!
+        var absoluteUrl = NetworkUtils.getAbsoluteURL(baseUrl, urlArray[0])
         if (urlArray.size > 1) {
             absoluteUrl = "$absoluteUrl,${urlArray[1]}"
         }

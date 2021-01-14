@@ -20,7 +20,7 @@ object BookContent {
 
     @Throws(Exception::class)
     suspend fun analyzeContent(
-        coroutineScope: CoroutineScope,
+        scope: CoroutineScope,
         body: String?,
         book: Book,
         bookChapter: BookChapter,
@@ -46,7 +46,7 @@ object BookContent {
             val nextChapterUrl = if (!nextChapterUrlF.isNullOrEmpty())
                 nextChapterUrlF
             else
-                App.db.bookChapterDao().getChapter(book.bookUrl, bookChapter.index + 1)?.url
+                App.db.bookChapterDao.getChapter(book.bookUrl, bookChapter.index + 1)?.url
             while (nextUrl.isNotEmpty() && !nextUrlList.contains(nextUrl)) {
                 if (!nextChapterUrl.isNullOrEmpty()
                     && NetworkUtils.getAbsoluteURL(baseUrl, nextUrl)
@@ -57,7 +57,7 @@ object BookContent {
                     ruleUrl = nextUrl,
                     book = book,
                     headerMapF = bookSource.getHeaderMap()
-                ).getResponseAwait(bookSource.bookSourceUrl).body?.let { nextBody ->
+                ).getStrResponse(bookSource.bookSourceUrl).body?.let { nextBody ->
                     contentData = analyzeContent(
                         book, nextUrl, nextBody, contentRule, bookChapter, bookSource, false
                     )
@@ -74,12 +74,12 @@ object BookContent {
                     contentDataList.add(ContentData(nextUrl = item))
             }
             for (item in contentDataList) {
-                withContext(coroutineScope.coroutineContext) {
+                withContext(scope.coroutineContext) {
                     AnalyzeUrl(
                         ruleUrl = item.nextUrl,
                         book = book,
                         headerMapF = bookSource.getHeaderMap()
-                    ).getResponseAwait(bookSource.bookSourceUrl).body?.let {
+                    ).getStrResponse(bookSource.bookSourceUrl).body?.let {
                         contentData = analyzeContent(
                             book, item.nextUrl, it, contentRule, bookChapter, bookSource, false
                         )
@@ -93,14 +93,9 @@ object BookContent {
         }
         content.deleteCharAt(content.length - 1)
         var contentStr = content.toString().htmlFormat()
-        val fontJs = contentRule.fontJs
-        if (!fontJs.isNullOrBlank()) {
-            contentStr = analyzeRule.evalJS(fontJs, body, contentStr)?.toString() ?: ""
-        }
         val replaceRegex = contentRule.replaceRegex
         if (!replaceRegex.isNullOrEmpty()) {
-            analyzeRule.setContent(contentStr)
-            contentStr = analyzeRule.getString(replaceRegex)
+            contentStr = analyzeRule.getString(replaceRegex, value = contentStr)
         }
         Debug.log(bookSource.bookSourceUrl, "┌获取章节名称")
         Debug.log(bookSource.bookSourceUrl, "└${bookChapter.title}")

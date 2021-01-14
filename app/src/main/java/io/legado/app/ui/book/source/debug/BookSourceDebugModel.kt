@@ -17,7 +17,7 @@ class BookSourceDebugModel(application: Application) : BaseViewModel(application
         sourceUrl?.let {
             //优先使用这个，不会抛出异常
             execute {
-                val bookSource = App.db.bookSourceDao().getBookSource(sourceUrl)
+                val bookSource = App.db.bookSourceDao.getBookSource(sourceUrl)
                 bookSource?.let { webBook = WebBook(it) }
             }
         }
@@ -28,11 +28,14 @@ class BookSourceDebugModel(application: Application) : BaseViewModel(application
     }
 
     fun startDebug(key: String, start: (() -> Unit)? = null, error: (() -> Unit)? = null) {
-        webBook?.let {
+        execute {
+            Debug.callback = this@BookSourceDebugModel
+            Debug.startDebug(this, webBook!!, key)
+        }.onStart {
             start?.invoke()
-            Debug.callback = this
-            Debug.startDebug(it, key)
-        } ?: error?.invoke()
+        }.onError {
+            error?.invoke()
+        }
     }
 
     override fun printLog(state: Int, msg: String) {

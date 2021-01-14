@@ -6,7 +6,6 @@ import androidx.annotation.Keep
 import io.legado.app.App
 import io.legado.app.constant.AppConst.dateFormat
 import io.legado.app.help.http.CookieStore
-import io.legado.app.help.http.HttpHelper
 import io.legado.app.help.http.SSLHelper
 import io.legado.app.model.Debug
 import io.legado.app.model.analyzeRule.AnalyzeUrl
@@ -15,6 +14,8 @@ import io.legado.app.utils.*
 import kotlinx.coroutines.runBlocking
 import org.jsoup.Connection
 import org.jsoup.Jsoup
+import rxhttp.wrapper.param.RxHttp
+import rxhttp.wrapper.param.toByteArray
 import java.io.File
 import java.net.URLEncoder
 import java.nio.charset.Charset
@@ -28,13 +29,15 @@ interface JsExtensions {
      * 访问网络,返回String
      */
     fun ajax(urlStr: String): String? {
-        return try {
-            val analyzeUrl = AnalyzeUrl(urlStr)
-            val call = analyzeUrl.getResponse(urlStr)
-            val response = call.execute()
-            response.body()
-        } catch (e: Exception) {
-            e.msg
+        return runBlocking {
+            kotlin.runCatching {
+                val analyzeUrl = AnalyzeUrl(urlStr)
+                analyzeUrl.getStrResponse(urlStr).body
+            }.onFailure {
+                it.printStackTrace()
+            }.getOrElse {
+                it.msg
+            }
         }
     }
 
@@ -42,21 +45,23 @@ interface JsExtensions {
      * 访问网络,返回Response<String>
      */
     fun connect(urlStr: String): Any {
-        return try {
-            val analyzeUrl = AnalyzeUrl(urlStr)
-            val call = analyzeUrl.getResponse(urlStr)
-            val response = call.execute()
-            response
-        } catch (e: Exception) {
-            e.msg
+        return runBlocking {
+            kotlin.runCatching {
+                val analyzeUrl = AnalyzeUrl(urlStr)
+                analyzeUrl.getStrResponse(urlStr)
+            }.onFailure {
+                it.printStackTrace()
+            }.getOrElse {
+                it.msg
+            }
         }
     }
 
     /**
-     * 实现文件下载,返回路径
+     * 实现16进制字符串转文件
      */
     fun downloadFile(content: String, url: String): String {
-        val type = AnalyzeUrl(url).type ?: return "type为空，未下载"
+        val type = AnalyzeUrl(url).type ?: return ""
         val zipPath = FileUtils.getPath(
             FileUtils.createFolderIfNotExist(FileUtils.getCachePath()),
             "${MD5Utils.md5Encode16(url)}.${type}"
@@ -64,7 +69,7 @@ interface JsExtensions {
         FileUtils.deleteFile(zipPath)
         val zipFile = FileUtils.createFileIfNotExist(zipPath)
         StringUtils.hexStringToByte(content).let {
-            if (it != null) {
+            if (it.isNotEmpty()) {
                 zipFile.writeBytes(it)
             }
         }
@@ -75,6 +80,7 @@ interface JsExtensions {
      * js实现压缩文件解压
      */
     fun unzipFile(zipPath: String): String {
+        if (zipPath.isEmpty()) return ""
         val unzipPath = FileUtils.getPath(
             FileUtils.createFolderIfNotExist(FileUtils.getCachePath()),
             FileUtils.getNameExcludeExtension(zipPath)
@@ -91,6 +97,7 @@ interface JsExtensions {
      * js实现文件夹内所有文件读取
      */
     fun getTxtInFolder(unzipPath: String): String {
+        if (unzipPath.isEmpty()) return ""
         val unzipFolder = FileUtils.createFolderIfNotExist(unzipPath)
         val contents = StringBuilder()
         unzipFolder.listFiles().let {
@@ -108,7 +115,7 @@ interface JsExtensions {
     }
 
     /**
-     * js实现重定向拦截,不能删
+     * js实现重定向拦截,网络访问get
      */
     fun get(urlStr: String, headers: Map<String, String>): Connection.Response {
         return Jsoup.connect(urlStr)
@@ -250,8 +257,8 @@ interface JsExtensions {
             str.isAbsUrl() -> runBlocking {
                 var x = CacheManager.getByteArray(key)
                 if (x == null) {
-                    x = HttpHelper.simpleGetBytesAsync(str)
-                    x?.let {
+                    x = RxHttp.get(str).toByteArray().await()
+                    x.let {
                         CacheManager.put(key, it)
                     }
                 }
@@ -270,17 +277,15 @@ interface JsExtensions {
     fun replaceFont(
         text: String,
         font1: QueryTTF?,
-        font2: QueryTTF?,
-        start: Int,
-        end: Int
+        font2: QueryTTF?
     ): String {
         if (font1 == null || font2 == null) return text
         val contentArray = text.toCharArray()
         contentArray.forEachIndexed { index, s ->
             val oldCode = s.toInt()
-            if (oldCode in start until end) {
-                val code = font2.GetCodeByGlyf(font1.GetGlyfByCode(oldCode))
-                if(code != 0) contentArray[index] = code.toChar()
+            if (font1.inLimit(s)) {
+                val code = font2.getCodeByGlyf(font1.getGlyfByCode(oldCode))
+                if (code != 0) contentArray[index] = code.toChar()
             }
         }
         return contentArray.joinToString("")

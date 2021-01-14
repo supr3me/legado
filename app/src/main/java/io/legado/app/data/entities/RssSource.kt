@@ -11,7 +11,7 @@ import io.legado.app.help.JsExtensions
 import io.legado.app.help.http.CookieStore
 import io.legado.app.utils.GSON
 import io.legado.app.utils.fromJsonObject
-import kotlinx.android.parcel.Parcelize
+import kotlinx.parcelize.Parcelize
 import java.util.*
 import javax.script.SimpleBindings
 
@@ -25,6 +25,7 @@ data class RssSource(
     var sourceGroup: String? = null,
     var enabled: Boolean = true,
     var sortUrl: String? = null,
+    var singleUrl: Boolean = false,
     var articleStyle: Int = 0,
     //列表规则
     var ruleArticles: String? = null,

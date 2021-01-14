@@ -37,9 +37,9 @@
                             android:title="@string/sort_auto" />
 
                         <item
-                            android:id="@+id/menu_sort_pin_yin"
+                            android:id="@+id/menu_sort_name"
                             android:checkable="true"
-                            android:title="@string/sort_pin_yin" />
+                            android:title="@string/sort_name" />
 
                         <item
                             android:id="@+id/menu_sort_url"
@@ -50,6 +50,12 @@
                             android:id="@+id/menu_sort_time"
                             android:checkable="true"
                             android:title="@string/sort_by_lastUpdateTime" />
+
+                        <item
+                            android:id="@+id/menu_sort_enable"
+                            android:checkable="true"
+                            android:title="@string/sort_enable" />
+
                     </group>
 
                 </menu>

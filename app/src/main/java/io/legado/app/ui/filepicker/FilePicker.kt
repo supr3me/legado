@@ -5,7 +5,6 @@ import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import io.legado.app.R
-import io.legado.app.base.BaseActivity
 import io.legado.app.help.permission.Permissions
 import io.legado.app.help.permission.PermissionsCompat
 import io.legado.app.lib.dialogs.alert
@@ -31,11 +30,10 @@ object FilePicker {
             items(selectList) { _, index ->
                 when (index) {
                     0 -> {
-                        try {
+                        kotlin.runCatching {
                             val intent = createSelectDirIntent()
                             activity.startActivityForResult(intent, requestCode)
-                        } catch (e: java.lang.Exception) {
-                            e.printStackTrace()
+                        }.onFailure {
                             checkPermissions(activity) {
                                 FilePickerDialog.show(
                                     activity.supportFragmentManager,
@@ -82,11 +80,10 @@ object FilePicker {
             items(selectList) { _, index ->
                 when (index) {
                     0 -> {
-                        try {
+                        kotlin.runCatching {
                             val intent = createSelectDirIntent()
                             fragment.startActivityForResult(intent, requestCode)
-                        } catch (e: java.lang.Exception) {
-                            e.printStackTrace()
+                        }.onFailure {
                             checkPermissions(fragment) {
                                 FilePickerDialog.show(
                                     fragment.childFragmentManager,
@@ -116,7 +113,7 @@ object FilePicker {
     }
 
     fun selectFile(
-        activity: BaseActivity,
+        activity: AppCompatActivity,
         requestCode: Int,
         title: String = activity.getString(R.string.select_file),
         allowExtensions: Array<String> = arrayOf(),
@@ -134,15 +131,14 @@ object FilePicker {
             items(selectList) { _, index ->
                 when (index) {
                     0 -> {
-                        try {
+                        kotlin.runCatching {
                             val intent = createSelectFileIntent()
                             intent.putExtra(
                                 Intent.EXTRA_MIME_TYPES,
                                 typesOfExtensions(allowExtensions)
                             )
                             activity.startActivityForResult(intent, requestCode)
-                        } catch (e: java.lang.Exception) {
-                            e.printStackTrace()
+                        }.onFailure {
                             checkPermissions(activity) {
                                 FilePickerDialog.show(
                                     activity.supportFragmentManager,
@@ -192,15 +188,14 @@ object FilePicker {
             items(selectList) { _, index ->
                 when (index) {
                     0 -> {
-                        try {
+                        kotlin.runCatching {
                             val intent = createSelectFileIntent()
                             intent.putExtra(
                                 Intent.EXTRA_MIME_TYPES,
                                 typesOfExtensions(allowExtensions)
                             )
                             fragment.startActivityForResult(intent, requestCode)
-                        } catch (e: java.lang.Exception) {
-                            e.printStackTrace()
+                        }.onFailure {
                             checkPermissions(fragment) {
                                 FilePickerDialog.show(
                                     fragment.childFragmentManager,

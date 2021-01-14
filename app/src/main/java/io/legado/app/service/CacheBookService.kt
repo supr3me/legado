@@ -60,7 +60,7 @@ class CacheBookService : BaseService() {
 
     override fun onCreate() {
         super.onCreate()
-        updateNotification(notificationContent)
+        upNotification()
         handler.postDelayed(runnable, 1000)
     }
 
@@ -95,7 +95,7 @@ class CacheBookService : BaseService() {
             synchronized(this) {
                 book = bookMap[bookUrl]
                 if (book == null) {
-                    book = App.db.bookDao().getBook(bookUrl)
+                    book = App.db.bookDao.getBook(bookUrl)
                     if (book == null) {
                         removeDownload(bookUrl)
                     }
@@ -111,7 +111,7 @@ class CacheBookService : BaseService() {
             synchronized(this) {
                 webBook = webBookMap[origin]
                 if (webBook == null) {
-                    App.db.bookSourceDao().getBookSource(origin)?.let {
+                    App.db.bookSourceDao.getBookSource(origin)?.let {
                         webBook = WebBook(it)
                     }
                     if (webBook == null) {
@@ -126,13 +126,14 @@ class CacheBookService : BaseService() {
     private fun addDownloadData(bookUrl: String?, start: Int, end: Int) {
         bookUrl ?: return
         if (downloadMap.containsKey(bookUrl)) {
-            updateNotification(getString(R.string.already_in_download))
-            toast(R.string.already_in_download)
+            notificationContent = getString(R.string.already_in_download)
+            upNotification()
+            toast(notificationContent)
             return
         }
         downloadCount[bookUrl] = DownloadCount()
         execute {
-            App.db.bookChapterDao().getChapterList(bookUrl, start, end).let {
+            App.db.bookChapterDao.getChapterList(bookUrl, start, end).let {
                 if (it.isNotEmpty()) {
                     val chapters = CopyOnWriteArraySet<BookChapter>()
                     chapters.addAll(it)
@@ -183,25 +184,21 @@ class CacheBookService : BaseService() {
                     return@async
                 }
                 if (!BookHelp.hasContent(book, bookChapter)) {
-                    webBook.getContent(
-                        book,
-                        bookChapter,
-                        scope = this,
-                        context = searchPool
-                    ).timeout(60000L)
+                    webBook.getContent(this, book, bookChapter, context = searchPool)
+                        .timeout(60000L)
                         .onError {
                             synchronized(this) {
                                 downloadingList.remove(bookChapter.url)
                             }
-                            CacheBook.addLog("getContentError${it.localizedMessage}")
-                            updateNotification("getContentError${it.localizedMessage}")
+                            notificationContent = "getContentError${it.localizedMessage}"
+                            upNotification()
                         }
                         .onSuccess {
                             synchronized(this@CacheBookService) {
                                 downloadCount[book.bookUrl]?.increaseSuccess()
                                 downloadCount[book.bookUrl]?.increaseFinished()
                                 downloadCount[book.bookUrl]?.let {
-                                    updateNotification(
+                                    upNotification(
                                         it,
                                         downloadMap[book.bookUrl]?.size,
                                         bookChapter.title
@@ -230,8 +227,9 @@ class CacheBookService : BaseService() {
                 }
             }
         }.onError {
-            CacheBook.addLog("ERROR:${it.localizedMessage}")
-            updateNotification("ERROR:${it.localizedMessage}")
+            notificationContent = "ERROR:${it.localizedMessage}"
+            CacheBook.addLog(notificationContent)
+            upNotification()
         }
         tasks.add(task)
     }
@@ -253,13 +251,13 @@ class CacheBookService : BaseService() {
     }
 
     private fun upDownload() {
-        updateNotification(notificationContent)
+        upNotification()
         postEvent(EventBus.UP_DOWNLOAD, downloadMap)
         handler.removeCallbacks(runnable)
         handler.postDelayed(runnable, 1000)
     }
 
-    private fun updateNotification(
+    private fun upNotification(
         downloadCount: DownloadCount,
         totalCount: Int?,
         content: String
@@ -271,8 +269,8 @@ class CacheBookService : BaseService() {
     /**
      * 更新通知
      */
-    private fun updateNotification(content: String) {
-        notificationBuilder.setContentText(content)
+    private fun upNotification() {
+        notificationBuilder.setContentText(notificationContent)
         val notification = notificationBuilder.build()
         startForeground(AppConst.notificationIdDownload, notification)
     }
